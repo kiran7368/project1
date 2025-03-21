@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>College Attendance Management System</title>
+    <style>
+        /* General Styles */
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f8f9fa;
+            color: #343a40;
+        }
+        header {
+            background-color: #007bff;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        header img {
+            width: 50px;
+            height: 50px;
+            margin-right: 15px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        h1, h2 {
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        input, button, select {
+            width: calc(100% - 22px);
+            padding: 10px;
+            font-size: 16px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            text-align: center;
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+        .center {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="https://srkrec.edu.in/ICAAAI-2024/img/venue.png"></a> 
+        <h1>Attendance Management System</h1>
+    </header>
+    <div class="container">
+        <!-- Login Form -->
+        <div id="loginForm">
+            <h2>Login</h2>
+            <div class="form-group">
+                <select id="role">
+                    <option value="student">Student</option>
+                    <option value="parent">Parent</option>
+                    <option value="faculty">Faculty</option>
+                    <option value="admin">Admin</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <input type="text" id="username" placeholder="Username" required>
+            </div>
+            <div class="form-group">
+                <input type="password" id="password" placeholder="Password" required>
+            </div>
+            <div class="form-group center">
+                <button onclick="login()">Login</button>
+            </div>
+        </div>
+
+        <!-- Admin Panel -->
+        <div id="adminPanel" style="display:none;">
+            <h2>Admin Panel</h2>
+            <div class="form-group">
+                <input type="text" id="studentName" placeholder="Student Name" required>
+            </div>
+            <div class="form-group">
+                <input type="date" id="attendanceDate" required>
+            </div>
+            <div class="form-group center">
+                <button onclick="updateAttendance()">Update Attendance</button>
+            </div>
+            <table>
+                <tr>
+                    <th>Student Name</th>
+                    <th>Classes Held</th>
+                    <th>Classes Attended</th>
+                    <th>Classes Absent</th>
+                    <th>Attendance (%)</th>
+                </tr>
+                <tbody id="attendanceTable"></tbody>
+            </table>
+        </div>
+
+        <!-- Parent Panel -->
+        <div id="parentPanel" style="display:none;">
+            <h2>Parent Panel</h2>
+            <div id="parentDetails"></div>
+        </div>
+
+        <!-- Faculty Panel -->
+        <div id="facultyPanel" style="display:none;">
+            <h2>Faculty Panel</h2>
+            <div class="form-group">
+                <input type="text" id="facultyStudentName" placeholder="Student Name" required>
+            </div>
+            <div class="form-group">
+                <input type="date" id="facultyAttendanceDate" required>
+            </div>
+            <div class="form-group center">
+                <button onclick="updateAttendance()">Update Attendance</button>
+            </div>
+        </div>
+
+        <!-- Student Panel -->
+        <div id="studentPanel" style="display:none;">
+            <h2>Student Panel</h2>
+            <div id="attendanceDetails"></div>
+        </div>
+    </div>
+
+    <script>
+        const students = [
+            { username: "student1", password: "pass1", attendance: { held: 50, attended: 45 }, parent: "parent1" },
+            { username: "student2", password: "pass2", attendance: { held: 50, attended: 42 }, parent: "parent2" },
+            { username: "student3", password: "pass3", attendance: { held: 50, attended: 38 }, parent: "parent3" }
+        ];
+
+        function login() {
+            const role = document.getElementById("role").value;
+            const username = document.getElementById("username").value;
+            const password = document.getElementById("password").value;
+
+            if (role === "admin") {
+                document.getElementById("loginForm").style.display = "none";
+                document.getElementById("adminPanel").style.display = "block";
+                renderAttendanceTable();
+            } else if (role === "faculty") {
+                document.getElementById("loginForm").style.display = "none";
+                document.getElementById("facultyPanel").style.display = "block";
+            } else if (role === "parent") {
+                document.getElementById("loginForm").style.display = "none";
+                document.getElementById("parentPanel").style.display = "block";
+                document.getElementById("parentDetails").innerHTML = `
+                    <p>Parent Access Granted</p>
+                    <p>Username: ${username}</p>
+                `;
+            } else if (role === "student") {
+                document.getElementById("loginForm").style.display = "none";
+                document.getElementById("studentPanel").style.display = "block";
+                document.getElementById("attendanceDetails").innerHTML = `
+                    <p>Welcome, ${username}</p>
+                    <p>Your attendance records will be available soon.</p>
+                `;
+            }
+        }
+
+        function renderAttendanceTable() {
+            const table = document.getElementById("attendanceTable");
+            table.innerHTML = "";
+            students.forEach(student => {
+                const absent = student.attendance.held - student.attendance.attended;
+                const percentage = ((student.attendance.attended / student.attendance.held) * 100).toFixed(2);
+                const row = `<tr>
+                    <td>${student.username}</td>
+                    <td>${student.attendance.held}</td>
+                    <td>${student.attendance.attended}</td>
+                    <td>${absent}</td>
+                    <td>${percentage}%</td>
+                </tr>`;
+                table.innerHTML += row;
+            });
+        }
+
+        function updateAttendance() {
+            const name = document.getElementById("studentName").value || document.getElementById("facultyStudentName").value;
+            const student = students.find(s => s.username === name);
+            if (student) {
+                student.attendance.held += 1;
+                student.attendance.attended += 1;
+                renderAttendanceTable();
+                alert(`Attendance updated for ${name}`);
+            } else {
+                alert("Student not found!");
+            }
+        }
+    </script>
+</body>
+</html>
